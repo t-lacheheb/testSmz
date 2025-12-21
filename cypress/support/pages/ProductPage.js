@@ -43,19 +43,19 @@ class ProductPage {
     // Include fallback in selector list to ensure we always have a match
     const allSelectors = [...selectors, fallbackSelector]
     const combinedSelector = allSelectors.join(', ')
-    // Get all elements, then filter for visible ones
-    // If none are visible, we'll get the fallback (which should always exist)
+    // Get all elements, then find first visible one manually
+    // This avoids returning Cypress commands from .then() callbacks
     return cy.get(combinedSelector, { timeout: 2000 }).then(($allElements) => {
       // Find first visible element manually
       for (let i = 0; i < $allElements.length; i++) {
         const $el = Cypress.$($allElements[i])
         if ($el.is(':visible')) {
-          // Return jQuery element - Cypress will auto-wrap it properly
+          // Return jQuery element directly - Cypress will auto-wrap it and maintain chain
           return $el
         }
       }
       // No visible elements found, return fallback element (last in list)
-      // Return jQuery element, not Cypress command
+      // Return jQuery element directly - Cypress will auto-wrap it and maintain chain
       return Cypress.$($allElements[$allElements.length - 1])
     })
   }
