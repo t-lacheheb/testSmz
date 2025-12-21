@@ -1,0 +1,18 @@
+{
+  "testUrl": "/en/product/b2b/qa-take-home?referrer=preview&productId=40301",
+  "baseUrl": "https://test-discover.smeetz.com",
+  "productId": "40301",
+  "testData": {
+    "validDate": "2024-12-25",
+    "invalidDate": "2020-01-01",
+    "minQuantity": 1,
+    "maxQuantity": 10,
+    "testQuantity": 2
+  },
+  "selectors": {
+    "datePicker": "[class*='date'], [class*='calendar']",
+    "quantityInput": "input[type='number'], [class*='quantity']",
+    "bookButton": "button[type='submit'], [class*='book']"
+  }
+}
+

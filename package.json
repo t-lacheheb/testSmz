@@ -1,0 +1,23 @@
+{
+  "name": "smeetz-qa-test-assignment",
+  "version": "1.0.0",
+  "description": "QA Testing Assignment for Smeetz Website",
+  "main": "index.js",
+  "scripts": {
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test": "cypress run"
+  },
+  "keywords": [
+    "cypress",
+    "testing",
+    "qa",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^13.6.0"
+  }
+}
+
