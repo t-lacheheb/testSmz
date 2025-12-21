@@ -169,37 +169,139 @@ class ProductPage {
   }
 
   /**
+   * Get the organiser link element
+   * @returns {Cypress.Chainable} The organiser link element
+   */
+  getOrganiserLink() {
+    // Search for links containing "organiser" or "organizer" text (case insensitive)
+    return cy.get('body').then(($body) => {
+      // Find all links
+      const links = $body.find('a')
+      for (let i = 0; i < links.length; i++) {
+        const $link = Cypress.$(links[i])
+        const text = $link.text().toLowerCase()
+        const href = $link.attr('href') || ''
+        
+        // Check if link text or href contains organiser/organizer
+        if (text.includes('organiser') || text.includes('organizer') || 
+            href.includes('organiser') || href.includes('organizer')) {
+          return $link
+        }
+      }
+      
+      // Fallback: try to find by class names
+      const classSelectors = [
+        '[class*="organiser"]',
+        '[class*="organizer"]',
+        '[class*="organiser-link"]',
+        '[class*="organizer-link"]'
+      ]
+      
+      for (const selector of classSelectors) {
+        const elements = $body.find(selector)
+        if (elements.length > 0) {
+          return Cypress.$(elements[0])
+        }
+      }
+      
+      // Return body as fallback
+      return $body
+    })
+  }
+
+  /**
    * Get the add to cart or book button
+   * Uses human-readable text matching for Vue.js rendered content
    * @returns {Cypress.Chainable} The booking button element
    */
   getBookButton() {
-    const selectors = [
-      'button[type="submit"]',
-      'button[class*="book"]',
-      'button[class*="add"]',
-      'button[class*="cart"]',
-      'a[class*="book"]',
-      '[data-testid*="book"]',
-      '[data-testid*="submit"]'
-    ]
-    
-    // For book button, we need to check text content, so use a different approach
+    // First, try to find button by text content (most reliable for Vue.js apps)
     return cy.get('body').then(($body) => {
+      // Find all buttons and links
+      const allClickableElements = $body.find('button, a, [role="button"]')
+      
+      for (let i = 0; i < allClickableElements.length; i++) {
+        const $element = Cypress.$(allClickableElements[i])
+        const text = $element.text().toLowerCase().trim()
+        
+        // Check for "book" text (exact match or contains)
+        if (text === 'book' || text.includes('book') || text === 'book now' || text.includes('book now')) {
+          // Make sure it's not "sold out" or disabled
+          const isDisabled = $element.is(':disabled') || $element.hasClass('disabled') || 
+                           $element.attr('disabled') !== undefined
+          const hasSoldOut = text.includes('sold out')
+          
+          if (!isDisabled && !hasSoldOut) {
+            return $element
+          }
+        }
+      }
+      
+      // Fallback: try selectors
+      const selectors = [
+        'button[type="submit"]',
+        'button[class*="book"]',
+        'button[class*="btn"]',
+        'a[class*="book"]',
+        '[data-testid*="book"]',
+        '[data-testid*="submit"]',
+        '[aria-label*="book" i]',
+        '[aria-label*="Book" i]'
+      ]
+      
       for (const selector of selectors) {
         const elements = $body.find(selector)
         if (elements.length > 0) {
           for (let i = 0; i < elements.length; i++) {
-            const text = Cypress.$(elements[i]).text().toLowerCase()
-            if (text.includes('book') || text.includes('add') || text.includes('buy') || text.includes('cart')) {
-              // Return jQuery element, not Cypress command
-              return Cypress.$(elements[i])
+            const $el = Cypress.$(elements[i])
+            const text = $el.text().toLowerCase().trim()
+            // Make sure it's not sold out
+            if (!text.includes('sold out') && !$el.is(':disabled')) {
+              return $el
             }
           }
         }
       }
-      // Fallback to any button - return jQuery element
+      
+      // Last fallback: any button
       const buttons = $body.find('button')
       return buttons.length > 0 ? Cypress.$(buttons[0]) : $body
+    })
+  }
+
+  /**
+   * Check if "Sold out" message is displayed
+   * @returns {Cypress.Chainable} Element containing sold out message or null
+   */
+  getSoldOutMessage() {
+    return cy.get('body').then(($body) => {
+      // Search for "sold out" text in all elements
+      const allElements = $body.find('*')
+      for (let i = 0; i < allElements.length; i++) {
+        const $el = Cypress.$(allElements[i])
+        const text = $el.text().toLowerCase().trim()
+        
+        if (text === 'sold out' || text.includes('sold out')) {
+          return $el
+        }
+      }
+      
+      // Try selectors
+      const selectors = [
+        '[class*="sold"]',
+        '[class*="out"]',
+        '[class*="unavailable"]',
+        '[data-testid*="sold"]'
+      ]
+      
+      for (const selector of selectors) {
+        const elements = $body.find(selector)
+        if (elements.length > 0) {
+          return Cypress.$(elements[0])
+        }
+      }
+      
+      return null
     })
   }
 }

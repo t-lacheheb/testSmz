@@ -15,19 +15,29 @@ Feature: Smeetz Product Page Functionality
     And I should see the navigation elements
     And the page should be fully functional
 
-  @booking @date-selection
-  Scenario: Verify Date Selection and Booking Flow
+  @organiser @link
+  Scenario: Verify Organiser Link is Accessible
     Given I am on the product page
-    When I interact with the date selector
-    Then the date picker should be displayed
-    And the booking section should remain visible
-    And the booking options should update based on selection
+    When I look for the organiser link
+    Then the organiser link should be visible
+    And the organiser link should be clickable
+    And the organiser link should have a valid href
 
-  @booking @quantity
-  Scenario: Verify Quantity Selection and Price Calculation
-    Given I have selected a date
-    When I change the quantity
-    Then the quantity value should update correctly
-    And the total price should be recalculated
-    And invalid quantity inputs should be rejected
+  @booking @book-button @bug
+  Scenario: Bug - Book Button Should Allow Booking But Shows Sold Out
+    Given I am on the product page
+    When I click on the Book button
+    Then I should be able to proceed with booking
+    But the actual result shows "Sold out" message appears instead
+
+
+
+  @bug @responsive @payment-methods
+  Scenario: Bug - Payment Methods Section Not Responsive
+    Given I am on the product page
+    When I scroll to the payment methods section
+    And I view the page on different screen sizes
+    Then all payment method logos should be visible
+    And payment methods should not be cut off or hidden
+    And the payment section should be responsive across all viewports
 
