@@ -16,30 +16,64 @@ class ProductPage {
   }
 
   /**
+   * Helper method to find the first matching selector that exists in the DOM
+   * Uses comma-separated selectors which Cypress handles natively
+   * This properly maintains the Cypress command chain
+   * @param {string[]} selectors - Array of CSS selectors to try
+   * @param {string} fallbackSelector - Fallback selector if none match
+   * @returns {Cypress.Chainable} The first matching element or fallback
+   */
+  _findFirstMatchingElement(selectors, fallbackSelector = 'body') {
+    // Include fallback in selector list so we always have a match
+    // This avoids needing to return Cypress commands from .then() callbacks
+    const allSelectors = [...selectors, fallbackSelector]
+    const combinedSelector = allSelectors.join(', ')
+    // Return first matching element - will always find at least the fallback
+    return cy.get(combinedSelector, { timeout: 2000 }).first()
+  }
+
+  /**
+   * Helper method to find the first visible element from a list of selectors
+   * Checks visibility by filtering visible elements
+   * @param {string[]} selectors - Array of CSS selectors to try
+   * @param {string} fallbackSelector - Fallback selector if none match
+   * @returns {Cypress.Chainable} The first visible element or fallback
+   */
+  _findVisibleElement(selectors, fallbackSelector = 'body') {
+    // Include fallback in selector list to ensure we always have a match
+    const allSelectors = [...selectors, fallbackSelector]
+    const combinedSelector = allSelectors.join(', ')
+    // Get all elements, then filter for visible ones
+    // If none are visible, we'll get the fallback (which should always exist)
+    return cy.get(combinedSelector, { timeout: 2000 }).then(($allElements) => {
+      // Find first visible element manually
+      for (let i = 0; i < $allElements.length; i++) {
+        const $el = Cypress.$($allElements[i])
+        if ($el.is(':visible')) {
+          // Return jQuery element - Cypress will auto-wrap it properly
+          return $el
+        }
+      }
+      // No visible elements found, return fallback element (last in list)
+      // Return jQuery element, not Cypress command
+      return Cypress.$($allElements[$allElements.length - 1])
+    })
+  }
+
+  /**
    * Get the page title/heading element
    * @returns {Cypress.Chainable} The page title element
    */
   getPageTitle() {
-    // Try multiple selectors as page structure may vary
-    return cy.get('body').then(($body) => {
-      // Check for common heading patterns
-      const selectors = [
-        'h1',
-        '[class*="title"]',
-        '[class*="heading"]',
-        '[data-testid*="title"]',
-        '[data-testid*="heading"]'
-      ]
-      
-      for (const selector of selectors) {
-        const element = $body.find(selector).first()
-        if (element.length > 0 && element.is(':visible')) {
-          return cy.get(selector).first()
-        }
-      }
-      // Fallback to body if no specific title found
-      return cy.get('body')
-    })
+    const selectors = [
+      'h1',
+      '[class*="title"]',
+      '[class*="heading"]',
+      '[data-testid*="title"]',
+      '[data-testid*="heading"]'
+    ]
+    // Use _findVisibleElement to ensure title is visible
+    return this._findVisibleElement(selectors, 'body')
   }
 
   /**
@@ -47,7 +81,6 @@ class ProductPage {
    * @returns {Cypress.Chainable} The product info element
    */
   getProductInfo() {
-    // Look for product information containers
     const selectors = [
       '[class*="product"]',
       '[class*="info"]',
@@ -56,16 +89,7 @@ class ProductPage {
       'main',
       'article'
     ]
-    
-    return cy.get('body').then(($body) => {
-      for (const selector of selectors) {
-        const element = $body.find(selector).first()
-        if (element.length > 0) {
-          return cy.get(selector).first()
-        }
-      }
-      return cy.get('body')
-    })
+    return this._findFirstMatchingElement(selectors, 'body')
   }
 
   /**
@@ -73,7 +97,6 @@ class ProductPage {
    * @returns {Cypress.Chainable} The booking section element
    */
   getBookingSection() {
-    // Look for booking-related elements
     const selectors = [
       '[class*="booking"]',
       '[class*="book"]',
@@ -83,21 +106,7 @@ class ProductPage {
       'form',
       '[class*="form"]'
     ]
-    
-    return cy.get('body').then(($body) => {
-      for (const selector of selectors) {
-        const elements = $body.find(selector)
-        if (elements.length > 0) {
-          // Return the first visible element
-          for (let i = 0; i < elements.length; i++) {
-            if (Cypress.$(elements[i]).is(':visible')) {
-              return cy.get(selector).eq(i)
-            }
-          }
-        }
-      }
-      return cy.get('body')
-    })
+    return this._findVisibleElement(selectors, 'body')
   }
 
   /**
@@ -105,7 +114,6 @@ class ProductPage {
    * @returns {Cypress.Chainable} The date selector element
    */
   getDateSelector() {
-    // Look for date picker elements
     const selectors = [
       'input[type="date"]',
       'input[type="text"][class*="date"]',
@@ -117,16 +125,17 @@ class ProductPage {
       'input[placeholder*="Date" i]'
     ]
     
-    return cy.get('body').then(($body) => {
-      for (const selector of selectors) {
-        const element = $body.find(selector).first()
-        if (element.length > 0) {
-          return cy.get(selector).first()
-        }
-      }
-      // Fallback to booking section
-      return this.getBookingSection()
-    })
+    // Include booking section selectors as fallback options
+    const bookingSelectors = [
+      '[class*="booking"]',
+      '[class*="book"]',
+      'form'
+    ]
+    
+    // Combine all selectors including booking fallbacks
+    const allSelectors = [...selectors, ...bookingSelectors, 'body']
+    // Use helper method which properly maintains the chain
+    return this._findFirstMatchingElement(allSelectors, 'body')
   }
 
   /**
@@ -141,16 +150,7 @@ class ProductPage {
       '[class*="header"]',
       '[data-testid*="nav"]'
     ]
-    
-    return cy.get('body').then(($body) => {
-      for (const selector of selectors) {
-        const element = $body.find(selector).first()
-        if (element.length > 0) {
-          return cy.get(selector).first()
-        }
-      }
-      return cy.get('body')
-    })
+    return this._findFirstMatchingElement(selectors, 'body')
   }
 
   /**
@@ -165,16 +165,7 @@ class ProductPage {
       'select',
       '[data-testid*="quantity"]'
     ]
-    
-    return cy.get('body').then(($body) => {
-      for (const selector of selectors) {
-        const element = $body.find(selector).first()
-        if (element.length > 0) {
-          return cy.get(selector).first()
-        }
-      }
-      return cy.get('body')
-    })
+    return this._findFirstMatchingElement(selectors, 'body')
   }
 
   /**
@@ -192,6 +183,7 @@ class ProductPage {
       '[data-testid*="submit"]'
     ]
     
+    // For book button, we need to check text content, so use a different approach
     return cy.get('body').then(($body) => {
       for (const selector of selectors) {
         const elements = $body.find(selector)
@@ -199,13 +191,15 @@ class ProductPage {
           for (let i = 0; i < elements.length; i++) {
             const text = Cypress.$(elements[i]).text().toLowerCase()
             if (text.includes('book') || text.includes('add') || text.includes('buy') || text.includes('cart')) {
-              return cy.get(selector).eq(i)
+              // Return jQuery element, not Cypress command
+              return Cypress.$(elements[i])
             }
           }
         }
       }
-      // Fallback to any button
-      return cy.get('button').first()
+      // Fallback to any button - return jQuery element
+      const buttons = $body.find('button')
+      return buttons.length > 0 ? Cypress.$(buttons[0]) : $body
     })
   }
 }
