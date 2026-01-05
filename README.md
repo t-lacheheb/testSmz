@@ -1,4 +1,4 @@
-# Smeetz QA Testing Assignment
+# QA Testing
 
 This repository contains the test documentation, manual test cases, automated test scripts, and bug reports for the Smeetz product page testing assignment.
 
